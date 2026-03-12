@@ -25,6 +25,7 @@ func main() {
 		{ID: 1, Title: "Изучить Go", Done: false},
 		{ID: 2, Title: "Сделать первый API", Done: true},
 	}
+
 	nextID := 3
 
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
@@ -37,18 +38,14 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		_ = json.NewEncoder(w).Encode(tasks)
 	})
-	
 
 	mux.HandleFunc("GET /tasks/{id}", func(w http.ResponseWriter, r *http.Request) {
 		rawID := r.PathValue("id")
-
 		id, err := strconv.Atoi(rawID)
 		if err != nil || id <= 0 {
 			w.Header().Set("Content-Type", "application/json; charset=utf-8")
 			w.WriteHeader(http.StatusBadRequest)
-			_ = json.NewEncoder(w).Encode(map[string]string{
-				"error": "invalid task id",
-			})
+			_ = json.NewEncoder(w).Encode(map[string]string{"error": "invalid task id"})
 			return
 		}
 
@@ -63,9 +60,7 @@ func main() {
 
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(http.StatusNotFound)
-		_ = json.NewEncoder(w).Encode(map[string]string{
-			"error": "task not found",
-		})
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "task not found"})
 	})
 
 	mux.HandleFunc("POST /tasks", func(w http.ResponseWriter, r *http.Request) {
@@ -74,9 +69,7 @@ func main() {
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			w.Header().Set("Content-Type", "application/json; charset=utf-8")
 			w.WriteHeader(http.StatusBadRequest)
-			_ = json.NewEncoder(w).Encode(map[string]string{
-				"error": "invalid JSON body",
-			})
+			_ = json.NewEncoder(w).Encode(map[string]string{"error": "invalid JSON body"})
 			return
 		}
 
@@ -84,9 +77,7 @@ func main() {
 		if title == "" {
 			w.Header().Set("Content-Type", "application/json; charset=utf-8")
 			w.WriteHeader(http.StatusBadRequest)
-			_ = json.NewEncoder(w).Encode(map[string]string{
-				"error": "title must not be empty",
-			})
+			_ = json.NewEncoder(w).Encode(map[string]string{"error": "title must not be empty"})
 			return
 		}
 
@@ -98,17 +89,12 @@ func main() {
 
 		nextID++
 		tasks = append(tasks, task)
+
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(http.StatusCreated)
 		_ = json.NewEncoder(w).Encode(task)
-
 	})
 
-	server := &http.Server{
-		Addr:    ":8080",
-		Handler: mux,
-	}
-
 	log.Println("server started on :8080")
-	log.Fatal(server.ListenAndServe())
+	log.Fatal(http.ListenAndServe(":8080", mux))
 }

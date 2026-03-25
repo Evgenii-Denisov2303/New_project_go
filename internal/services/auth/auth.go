@@ -28,3 +28,16 @@ func New(userSaver UserSaver, userProvider UserProvider) *Auth {
 		userProvider: userProvider,
 	}
 }
+
+func (a *Auth) RegisterNewUser(ctx context.Context, email string, passHash []byte) (int64, error) {
+	return a.userSaver.SaveUser(ctx, email, passHash)
+}
+
+func (a *Auth) Login(ctx context.Context, email string) (models.User, error) {
+	user, err := a.userProvider.User(ctx, email)
+	if err != nil {
+		return models.User{}, err
+	}
+
+	return user, nil
+}

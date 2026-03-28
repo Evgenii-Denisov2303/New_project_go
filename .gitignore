@@ -1,1 +1,13 @@
 .tmp-gocache/
+.env
+.env.*
+.vscode/
+.idea
+bin/
+dist/
+tmp/
+*.exe
+*.dll
+*.log
+*.test
+coverage.out

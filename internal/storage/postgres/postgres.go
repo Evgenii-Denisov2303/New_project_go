@@ -3,11 +3,12 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"new_project_go/internal/domain/models"
 	"new_project_go/internal/storage"
-	"errors"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -43,6 +44,11 @@ func (s *Storage) SaveUser(ctx context.Context, email string, passHash []byte) (
 
 	err := s.db.QueryRowContext(ctx, query, email, passHash).Scan(&id)
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return 0, fmt.Errorf("%s: %w", op, storage.ErrUserExists)
+		}
+
 		return 0, fmt.Errorf("%s: %w", op, err)
 	}
 
@@ -64,11 +70,11 @@ func (s *Storage) User(ctx context.Context, email string) (models.User, error) {
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return models.User{}, fmt.Errorf("%s: %w", op,storage.ErrUserNotFound)
+			return models.User{}, fmt.Errorf("%s: %w", op, storage.ErrUserNotFound)
 		}
 
 		return models.User{}, fmt.Errorf("%s: %w", op, err)
 	}
 
-return user, nil
+	return user, nil
 }

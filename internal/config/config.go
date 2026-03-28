@@ -3,9 +3,9 @@ package config
 import "os"
 
 type Config struct {
-	Env		     string
-	HTTPPort     string
-	DatabaseURL  string
+	Env         string
+	HTTPPort    string
+	DatabaseURL string
 }
 
 func MustLoad() Config {
@@ -25,8 +25,8 @@ func MustLoad() Config {
 	}
 
 	return Config{
-		Env: 	  env,
-		HTTPPort: httpPort,
+		Env:         env,
+		HTTPPort:    httpPort,
 		DatabaseURL: databaseURL,
 	}
 }

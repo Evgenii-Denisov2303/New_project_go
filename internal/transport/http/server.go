@@ -3,17 +3,24 @@ package httpserver
 import (
 	"context"
 	"errors"
-	storagepkg "new_project_go/internal/storage"
 	// Пакет encoding/json нужен, чтобы читать JSON из тела запроса
 	// и отправлять JSON обратно клиенту.
 	"encoding/json"
 	// Пакет net/http даёт нам HTTP-сервер, роутер, запросы и ответы.
 	"net/http"
+
+	authservice "new_project_go/internal/services/auth"
+	storagepkg "new_project_go/internal/storage"
 )
 
 // registerRequest описывает форму JSON, который мы ждём в POST /register.
 type registerRequest struct {
 	// Email будет заполнен из поля "email" во входящем JSON.
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type loginRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
@@ -36,8 +43,30 @@ func validateRegisterRequest(req registerRequest) string {
 	return ""
 }
 
+func validateLoginRequest(req loginRequest) string {
+	if req.Email == "" {
+		return "email is required"
+	}
+
+	if req.Password == "" {
+		return "password is required"
+	}
+
+	return ""
+}
+
 type Auth interface {
-	RegisterNewUser(ctx context.Context, email string, password string) (int64, error)
+	RegisterNewUser(
+		ctx context.Context,
+		email string,
+		password string,
+	) (int64, error)
+
+	Login(
+		ctx context.Context,
+		email string,
+		password string,
+	) (string, error)
 }
 
 // NewServer создаёт и возвращает готовый HTTP-сервер.
@@ -93,9 +122,49 @@ func NewServer(port string, authService Auth) *http.Server {
 		}
 
 		writeJSON(w, http.StatusOK, map[string]any{
-			"user_id":  userID,
-			"email": req.Email,
-			"status": "user registered",
+			"user_id": userID,
+			"email":   req.Email,
+			"status":  "user registered",
+		})
+	})
+
+	mux.HandleFunc("POST /login", func(w http.ResponseWriter, r *http.Request) {
+		var req loginRequest
+
+		err := json.NewDecoder(r.Body).Decode(&req)
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{
+				"error": "invalid json",
+			})
+			return
+		}
+
+		validationErr := validateLoginRequest(req)
+		if validationErr != "" {
+			writeJSON(w, http.StatusBadRequest, map[string]string{
+				"error": validationErr,
+			})
+			return
+		}
+
+		token, err := authService.Login(r.Context(), req.Email, req.Password)
+		if err != nil {
+			if errors.Is(err, storagepkg.ErrUserNotFound) || errors.Is(err, authservice.ErrInvalidCredentials) {
+				writeJSON(w, http.StatusUnauthorized, map[string]string{
+					"error": "invalid email or password",
+				})
+				return
+			}
+
+			writeJSON(w, http.StatusInternalServerError, map[string]string{
+				"error": "failed to login",
+			})
+			return
+		}
+
+		writeJSON(w, http.StatusOK, map[string]any{
+			"token":  token,
+			"status": "login successful",
 		})
 	})
 

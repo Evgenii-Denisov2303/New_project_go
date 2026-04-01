@@ -33,7 +33,7 @@ func main() {
 		log.Fatalf("ping postgres: %v", err)
 	}
 
-	authService := authservice.New(storage, storage)
+	authService := authservice.New(storage, storage, cfg.JWTSecret, cfg.TokenTTL)
 
 	// Создаём HTTP-сервер на порту из конфига.
 	server := httpserver.NewServer(cfg.HTTPPort, authService)

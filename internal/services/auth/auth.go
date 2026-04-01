@@ -3,9 +3,13 @@ package auth
 import (
 	"context"
 	"errors"
+	"fmt"
+	"time"
+
 	"golang.org/x/crypto/bcrypt"
 
 	"new_project_go/internal/domain/models"
+	"new_project_go/internal/lib/jwt"
 )
 
 type UserSaver interface {
@@ -19,35 +23,56 @@ type UserProvider interface {
 type Auth struct {
 	userSaver    UserSaver
 	userProvider UserProvider
+	jwtSecret    string
+	tokenTTL     time.Duration
 }
 
 var ErrInvalidCredentials = errors.New("invalid credentials")
 
-func New(userSaver UserSaver, userProvider UserProvider) *Auth {
+func New(
+	userSaver UserSaver,
+	userProvider UserProvider,
+	jwtSecret string,
+	tokenTTL time.Duration,
+) *Auth {
 	return &Auth{
 		userSaver:    userSaver,
 		userProvider: userProvider,
+		jwtSecret:    jwtSecret,
+		tokenTTL:     tokenTTL,
 	}
 }
 
-func (a *Auth) RegisterNewUser(ctx context.Context, email string, password string) (int64, error) {passHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+func (a *Auth) RegisterNewUser(ctx context.Context, email string, password string) (int64, error) {
+	passHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		return  0, err
+		return 0, err
 	}
 
 	return a.userSaver.SaveUser(ctx, email, passHash)
 }
 
-func (a *Auth) Login(ctx context.Context, email string, password string) (models.User, error) {
+func (a *Auth) Login(
+	ctx context.Context,
+	email string,
+	password string,
+) (string, error) {
+	const op = "services.auth.Login"
+
 	user, err := a.userProvider.User(ctx, email)
 	if err != nil {
-		return models.User{}, err
+		return "", err
 	}
 
 	err = bcrypt.CompareHashAndPassword(user.PassHash, []byte(password))
 	if err != nil {
-		return models.User{}, ErrInvalidCredentials
+		return "", ErrInvalidCredentials
 	}
 
-	return user, nil
+	token, err := jwt.NewToken(user, a.jwtSecret, a.tokenTTL)
+	if err != nil {
+		return "", fmt.Errorf("%s: %w", op, err)
+	}
+
+	return token, nil
 }

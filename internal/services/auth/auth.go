@@ -9,7 +9,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"new_project_go/internal/domain/models"
-	"new_project_go/internal/lib/jwt"
+	jwtlib "new_project_go/internal/lib/jwt"
 )
 
 type UserSaver interface {
@@ -27,7 +27,15 @@ type Auth struct {
 	tokenTTL     time.Duration
 }
 
-var ErrInvalidCredentials = errors.New("invalid credentials")
+type TokenClaims struct {
+	UserID int64
+	Email  string
+}
+
+var (
+	ErrInvalidCredentials = errors.New("invalid credentials")
+	ErrInvalidToken       = errors.New("invalid token")
+)
 
 func New(
 	userSaver UserSaver,
@@ -69,10 +77,22 @@ func (a *Auth) Login(
 		return "", ErrInvalidCredentials
 	}
 
-	token, err := jwt.NewToken(user, a.jwtSecret, a.tokenTTL)
+	token, err := jwtlib.NewToken(user, a.jwtSecret, a.tokenTTL)
 	if err != nil {
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
 	return token, nil
+}
+
+func (a *Auth) ParseToken(token string) (TokenClaims, error) {
+	claims, err := jwtlib.ParseToken(token, a.jwtSecret)
+	if err != nil {
+		return TokenClaims{}, ErrInvalidToken
+	}
+
+	return TokenClaims{
+		UserID: claims.UserID,
+		Email:  claims.Email,
+	}, nil
 }

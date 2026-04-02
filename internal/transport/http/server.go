@@ -3,15 +3,21 @@ package httpserver
 import (
 	"context"
 	"errors"
+
 	// Пакет encoding/json нужен, чтобы читать JSON из тела запроса
 	// и отправлять JSON обратно клиенту.
 	"encoding/json"
 	// Пакет net/http даёт нам HTTP-сервер, роутер, запросы и ответы.
 	"net/http"
+	"strings"
 
 	authservice "new_project_go/internal/services/auth"
 	storagepkg "new_project_go/internal/storage"
 )
+
+type contextKey string
+
+const userClaimsKey contextKey = "userClaims"
 
 // registerRequest описывает форму JSON, который мы ждём в POST /register.
 type registerRequest struct {
@@ -23,6 +29,51 @@ type registerRequest struct {
 type loginRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
+}
+
+func authMiddleware(authService Auth, next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		token := getBearerToken(r.Header.Get("Authorization"))
+		if token == "" {
+			writeJSON(w, http.StatusUnauthorized, map[string]string{
+				"error": "missing or invalid authorization header",
+			})
+			return
+		}
+
+		claims, err := authService.ParseToken(token)
+		if err != nil {
+			if errors.Is(err, authservice.ErrInvalidToken) {
+				writeJSON(w, http.StatusUnauthorized, map[string]string{
+					"error": "invalid token",
+				})
+				return
+			}
+
+			writeJSON(w, http.StatusInternalServerError, map[string]string{
+				"error": "failed to parse token",
+			})
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), userClaimsKey, claims)
+		next(w, r.WithContext(ctx))
+	}
+}
+
+func getClaimsFromContext(ctx context.Context) (authservice.TokenClaims, bool) {
+	claims, ok := ctx.Value(userClaimsKey).(authservice.TokenClaims)
+	return claims, ok
+}
+
+func getBearerToken(authHeader string) string {
+	const prefix = "Bearer "
+
+	if !strings.HasPrefix(authHeader, prefix) {
+		return ""
+	}
+
+	return strings.TrimPrefix(authHeader, prefix)
 }
 
 func writeJSON(w http.ResponseWriter, status int, data any) {
@@ -67,6 +118,8 @@ type Auth interface {
 		email string,
 		password string,
 	) (string, error)
+
+	ParseToken(token string) (authservice.TokenClaims, error)
 }
 
 // NewServer создаёт и возвращает готовый HTTP-сервер.
@@ -167,6 +220,22 @@ func NewServer(port string, authService Auth) *http.Server {
 			"status": "login successful",
 		})
 	})
+
+	mux.HandleFunc("GET /me", authMiddleware(authService, func(w http.ResponseWriter, r *http.Request) {
+		claims, ok := getClaimsFromContext(r.Context())
+		if !ok {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{
+				"error": "failed to get user claims from context",
+			})
+			return
+		}
+
+		writeJSON(w, http.StatusOK, map[string]any{
+			"user_id": claims.UserID,
+			"email":   claims.Email,
+			"status":  "authenticated",
+		})
+	}))
 
 	// Возвращаем готовый HTTP-сервер с адресом и нашим роутером.
 	return &http.Server{

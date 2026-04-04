@@ -1,0 +1,11 @@
+.git
+.gitignore
+.vscode
+.idea
+.tmp-gocache
+tmp
+bin
+dist
+*.log
+*.exe
+coverage.out

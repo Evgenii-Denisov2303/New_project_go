@@ -4,10 +4,7 @@ import (
 	"context"
 	"errors"
 
-	// Пакет encoding/json нужен, чтобы читать JSON из тела запроса
-	// и отправлять JSON обратно клиенту.
 	"encoding/json"
-	// Пакет net/http даёт нам HTTP-сервер, роутер, запросы и ответы.
 	"net/http"
 	"strings"
 
@@ -19,9 +16,7 @@ type contextKey string
 
 const userClaimsKey contextKey = "userClaims"
 
-// registerRequest описывает форму JSON, который мы ждём в POST /register.
 type registerRequest struct {
-	// Email будет заполнен из поля "email" во входящем JSON.
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
@@ -122,28 +117,18 @@ type Auth interface {
 	ParseToken(token string) (authservice.TokenClaims, error)
 }
 
-// NewServer создаёт и возвращает готовый HTTP-сервер.
 func NewServer(port string, authService Auth) *http.Server {
-	// Создаём роутер, который будет распределять запросы по маршрутам.
 	mux := http.NewServeMux()
 
-	// Регистрируем маршрут GET /health.
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
-		// Отправляем клиенту статус 200 OK.
 		w.WriteHeader(http.StatusOK)
-		// Отправляем простое текстовое тело ответа "ok".
 		_, _ = w.Write([]byte("ok"))
 	})
 
-	// Регистрируем маршрут POST /register.
 	mux.HandleFunc("POST /register", func(w http.ResponseWriter, r *http.Request) {
-		// Создаём переменную, в которую потом распарсим JSON из тела запроса.
 		var req registerRequest
 
-		// Пытаемся прочитать JSON из тела запроса и заполнить им структуру req.
 		err := json.NewDecoder(r.Body).Decode(&req)
-		// Если JSON пришёл в неправильном формате, зайдём в этот блок.
-
 		if err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]string{
 				"error": "invalid json",
@@ -237,11 +222,8 @@ func NewServer(port string, authService Auth) *http.Server {
 		})
 	}))
 
-	// Возвращаем готовый HTTP-сервер с адресом и нашим роутером.
 	return &http.Server{
-		// Сервер будет слушать указанный порт, например :8080.
-		Addr: ":" + port,
-		// Все входящие запросы будет обрабатывать роутер mux.
+		Addr:    ":" + port,
 		Handler: mux,
 	}
 }

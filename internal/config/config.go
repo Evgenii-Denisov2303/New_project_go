@@ -11,9 +11,15 @@ type Config struct {
 	DatabaseURL string
 	JWTSecret   string
 	TokenTTL    time.Duration
+	ArticlesHTTPPort string
 }
 
 func MustLoad() Config {
+	articlesHTTPPort := os.Getenv("ARTICLES_HTTP_PORT")
+	if articlesHTTPPort == "" {
+		articlesHTTPPort = "8081"
+	}
+
 	env := os.Getenv("APP_ENV")
 	if env == "" {
 		env = "local"
@@ -50,5 +56,6 @@ func MustLoad() Config {
 		DatabaseURL: databaseURL,
 		JWTSecret:   jwtSecret,
 		TokenTTL:    tokenTTL,
+		ArticlesHTTPPort: articlesHTTPPort,
 	}
 }

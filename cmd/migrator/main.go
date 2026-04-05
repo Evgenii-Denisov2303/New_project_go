@@ -30,7 +30,17 @@ func main() {
 
 	_, err = db.Exec(string(sqlBytes))
 	if err != nil {
-		log.Fatalf("apply migration: %v", err)
+		log.Fatalf("apply users migration: %v", err)
+	}
+
+	sqlBytes, err = os.ReadFile("migrations/002_create_articles_table.sql")
+	if err != nil {
+		log.Fatalf("read articles migration file: %v", err)
+	}
+
+	_, err = db.Exec(string(sqlBytes))
+	if err != nil {
+		log.Fatalf("apply articles migration: %v", err)
 	}
 
 	log.Println("migration applied successfully")

@@ -46,7 +46,7 @@ func TestService_Create(t *testing.T) {
 		nextID:   1,
 	}
 
-	service := New(storage, storage)
+	service := New(storage, storage, nil)
 
 	article := service.Create(
 		"Моя статья",
@@ -82,7 +82,7 @@ func TestService_GetByID(t *testing.T) {
 		nextID: 2,
 	}
 
-	service := New(storage, storage)
+	service := New(storage, storage, nil)
 
 	article, ok := service.GetByID(1)
 	if !ok {

@@ -4,10 +4,11 @@ import (
 	"log"
 
 	"new_project_go/internal/config"
-	"new_project_go/internal/storage/postgres"
-	authservice "new_project_go/internal/services/auth"
-	httpserver "new_project_go/internal/transport/http"
 	articlesservice "new_project_go/internal/services/articles"
+	authservice "new_project_go/internal/services/auth"
+	notificationservice "new_project_go/internal/services/notification"
+	"new_project_go/internal/storage/postgres"
+	httpserver "new_project_go/internal/transport/http"
 )
 
 func main() {
@@ -24,7 +25,8 @@ func main() {
 	}
 
 	authService := authservice.New(nil, nil, cfg.JWTSecret, cfg.TokenTTL)
-	articlesService := articlesservice.New(storage, storage)
+	notifier := notificationservice.New()
+	articlesService := articlesservice.New(storage, storage, notifier)
 
 	server := httpserver.NewArticlesServer(cfg.ArticlesHTTPPort, authService, articlesService)
 

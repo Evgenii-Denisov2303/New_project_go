@@ -81,7 +81,7 @@ func TestNewArticlesServer_ListArticles(t *testing.T) {
 		},
 	}
 
-	articlesService := articlesservice.New(storage, storage)
+	articlesService := articlesservice.New(storage, storage, nil)
 	server := NewArticlesServer("8081", stubAuth{}, articlesService)
 
 	req := httptest.NewRequest(http.MethodGet, "/articles", nil)
@@ -110,7 +110,7 @@ func TestNewArticlesServer_ListArticles(t *testing.T) {
 
 func TestNewArticlesServer_CreateArticle_Unauthorized(t *testing.T) {
 	storage := &stubHTTPArticleStorage{}
-	articlesService := articlesservice.New(storage, storage)
+	articlesService := articlesservice.New(storage, storage, nil)
 	server := NewArticlesServer("8081", stubAuth{}, articlesService)
 
 	body := strings.NewReader(`{"title":"Новая статья","content":"Текст статьи"}`)
@@ -127,7 +127,7 @@ func TestNewArticlesServer_CreateArticle_Unauthorized(t *testing.T) {
 
 func TestNewArticlesServer_CreateArticle_Success(t *testing.T) {
 	storage := &stubHTTPArticleStorage{}
-	articlesService := articlesservice.New(storage, storage)
+	articlesService := articlesservice.New(storage, storage, nil)
 
 	auth := stubAuth{
 		claims: authservice.TokenClaims{
@@ -182,7 +182,7 @@ func TestNewArticlesServer_GetArticleByID(t *testing.T) {
 		},
 	}
 
-	articlesService := articlesservice.New(storage, storage)
+	articlesService := articlesservice.New(storage, storage, nil)
 	server := NewArticlesServer("8081", stubAuth{}, articlesService)
 
 	req := httptest.NewRequest(http.MethodGet, "/articles/1", nil)
@@ -214,7 +214,7 @@ func TestNewArticlesServer_GetArticleByID_NotFound(t *testing.T) {
 		articles: []models.Article{},
 	}
 
-	articlesService := articlesservice.New(storage, storage)
+	articlesService := articlesservice.New(storage, storage, nil)
 	server := NewArticlesServer("8081", stubAuth{}, articlesService)
 
 	req := httptest.NewRequest(http.MethodGet, "/articles/999", nil)
@@ -226,4 +226,3 @@ func TestNewArticlesServer_GetArticleByID_NotFound(t *testing.T) {
 		t.Fatalf("expected status %d, got %d", http.StatusNotFound, rec.Code)
 	}
 }
-

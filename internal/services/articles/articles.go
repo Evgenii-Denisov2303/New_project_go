@@ -23,19 +23,22 @@ func New(articleProvider storagepkg.ArticleProvider, articleSaver storagepkg.Art
 	}
 }
 
-func (s *Service) List() []models.Article {
+func (s *Service) List() ([]models.Article, error) {
 	return s.articleProvider.ListArticles()
 }
 
-func (s *Service) GetByID(id int) (models.Article, bool) {
+func (s *Service) GetByID(id int) (models.Article, bool, error) {
 	return s.articleProvider.GetArticleByID(id)
 }
 
-func (s *Service) Create(title, content string, authorID int64, authorEmail string) models.Article {
-	article := s.articleSaver.CreateArticle(title, content, authorID, authorEmail)
+func (s *Service) Create(title, content string, authorID int64, authorEmail string) (models.Article, error) {
+	article, err := s.articleSaver.CreateArticle(title, content, authorID, authorEmail)
+	if err != nil {
+		return models.Article{}, err
+	}
 
 	if s.notifier != nil {
 		s.notifier.NotifyArticleCreated(article.Title, article.AuthorEmail)
 	}
-	return article
+	return article, nil
 }

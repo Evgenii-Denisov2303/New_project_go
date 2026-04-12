@@ -19,29 +19,29 @@ func NewInMemoryStorage() *InMemoryStorage {
 	}
 }
 
-func (s *InMemoryStorage) ListArticles() []models.Article {
+func (s *InMemoryStorage) ListArticles() ([]models.Article, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	result := make([]models.Article, len(s.articles))
 	copy(result, s.articles)
 
-	return result
+	return result, nil
 }
 
-func (s *InMemoryStorage) GetArticleByID(id int) (models.Article, bool) {
+func (s *InMemoryStorage) GetArticleByID(id int) (models.Article, bool, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	for _, article := range s.articles {
 		if article.ID == id {
-			return article, true
+			return article, true, nil
 		}
 	}
-	return models.Article{}, false
+	return models.Article{}, false, nil
 }
 
-func (s *InMemoryStorage) CreateArticle(title, content string, authorID int64, authorEmail string) models.Article {
+func (s *InMemoryStorage) CreateArticle(title, content string, authorID int64, authorEmail string) (models.Article, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -56,5 +56,5 @@ func (s *InMemoryStorage) CreateArticle(title, content string, authorID int64, a
 	s.articles = append(s.articles, article)
 	s.nextID++
 
-	return article
+	return article, nil
 }

@@ -1,15 +1,17 @@
 package postgres
 
 import (
+	"database/sql"
+
 	"new_project_go/internal/domain/models"
 )
 
-func (s *Storage) ListArticles() []models.Article {
+func (s *Storage) ListArticles() ([]models.Article, error) {
 	query := `SELECT id, title, content, author_id, author_email FROM articles ORDER BY id DESC`
 
 	rows, err := s.db.Query(query)
 	if err != nil {
-		return []models.Article{}
+		return []models.Article{}, err
 	}
 	defer rows.Close()
 
@@ -26,16 +28,16 @@ func (s *Storage) ListArticles() []models.Article {
 			&article.AuthorEmail,
 		)
 		if err != nil {
-			return []models.Article{}
+			return []models.Article{}, err
 		}
 
 		articles = append(articles, article)
 	}
 
-	return articles
+	return articles, nil
 }
 
-func (s *Storage) GetArticleByID(id int) (models.Article, bool) {
+func (s *Storage) GetArticleByID(id int) (models.Article, bool, error) {
 	query := `SELECT id, title, content, author_id, author_email FROM articles WHERE id = $1`
 
 	var article models.Article
@@ -48,13 +50,17 @@ func (s *Storage) GetArticleByID(id int) (models.Article, bool) {
 		&article.AuthorEmail,
 	)
 	if err != nil {
-		return models.Article{}, false
+		if err == sql.ErrNoRows {
+			return models.Article{}, false, nil
+		}
+		
+		return models.Article{}, false, err
 	}
 
-	return article, true
+	return article, true, nil
 }
 
-func (s *Storage) CreateArticle(title, content string, authorID int64, authorEmail string) models.Article {
+func (s *Storage) CreateArticle(title, content string, authorID int64, authorEmail string) (models.Article, error) {
 	query := `
 		INSERT INTO articles (title, content, author_id, author_email)
 		VALUES ($1, $2, $3, $4)
@@ -70,9 +76,9 @@ func (s *Storage) CreateArticle(title, content string, authorID int64, authorEma
 		&article.AuthorEmail,
 	)
 	if err != nil {
-		return models.Article{}
+		return models.Article{}, err
 	}
 
-	return article
+	return article, nil
 }
 

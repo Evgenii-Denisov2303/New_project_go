@@ -22,7 +22,15 @@ func NewArticlesServer(port string, authService Auth, articlesService *articless
 	})
 
 	mux.HandleFunc("GET /articles", func(w http.ResponseWriter, r *http.Request) {
-		writeJSON(w, http.StatusOK, articlesService.List())
+		articles, err := articlesService.List()
+		if err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{
+				"error": "failed to list articles",
+			})
+			return
+		}
+
+		writeJSON(w, http.StatusOK, articles)
 	})
 
 	mux.HandleFunc("GET /articles/{id}", func(w http.ResponseWriter, r *http.Request) {
@@ -36,7 +44,14 @@ func NewArticlesServer(port string, authService Auth, articlesService *articless
 			return
 		}
 
-		article, ok := articlesService.GetByID(id)
+		article, ok, err := articlesService.GetByID(id)
+		if err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{
+				"error": "failed to get article",
+			})
+			return
+		}
+
 		if !ok {
 			writeJSON(w, http.StatusNotFound, map[string]string{
 				"error": "article not found",
@@ -74,12 +89,18 @@ func NewArticlesServer(port string, authService Auth, articlesService *articless
 			return
 		}
 
-		newArticle := articlesService.Create(
+		newArticle, err := articlesService.Create(
 			req.Title,
 			req.Content,
 			claims.UserID,
 			claims.Email,
 		)
+		if err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{
+				"error": "failed to create article",
+			})
+			return
+		}
 
 		writeJSON(w, http.StatusCreated, newArticle)
 	}))

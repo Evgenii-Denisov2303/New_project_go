@@ -3,10 +3,10 @@ package main
 import (
 	"log"
 
+	notificationclient "new_project_go/internal/clients"
 	"new_project_go/internal/config"
 	articlesservice "new_project_go/internal/services/articles"
 	authservice "new_project_go/internal/services/auth"
-	notificationservice "new_project_go/internal/services/notification"
 	"new_project_go/internal/storage/postgres"
 	httpserver "new_project_go/internal/transport/http"
 )
@@ -25,7 +25,7 @@ func main() {
 	}
 
 	authService := authservice.New(nil, nil, cfg.JWTSecret, cfg.TokenTTL)
-	notifier := notificationservice.New()
+	notifier := notificationclient.New(cfg.NotificationBaseURL)
 	articlesService := articlesservice.New(storage, storage, notifier)
 
 	server := httpserver.NewArticlesServer(cfg.ArticlesHTTPPort, authService, articlesService)

@@ -6,18 +6,30 @@ import (
 )
 
 type Config struct {
-	Env         string
-	HTTPPort    string
-	DatabaseURL string
-	JWTSecret   string
-	TokenTTL    time.Duration
-	ArticlesHTTPPort string
+	Env                  string
+	HTTPPort             string
+	DatabaseURL          string
+	JWTSecret            string
+	TokenTTL             time.Duration
+	ArticlesHTTPPort     string
+	NotificationHTTPPort string
+	NotificationBaseURL  string
 }
 
 func MustLoad() Config {
 	articlesHTTPPort := os.Getenv("ARTICLES_HTTP_PORT")
 	if articlesHTTPPort == "" {
 		articlesHTTPPort = "8081"
+	}
+
+	notificationHTTPPort := os.Getenv("NOTIFICATION_HTTP_PORT")
+	if notificationHTTPPort == "" {
+		notificationHTTPPort = "8082"
+	}
+
+	notificationBaseURL := os.Getenv("NOTIFICATION_BASE_URL")
+	if notificationBaseURL == "" {
+		notificationBaseURL = "http://localhost:8082"
 	}
 
 	env := os.Getenv("APP_ENV")
@@ -51,11 +63,13 @@ func MustLoad() Config {
 	}
 
 	return Config{
-		Env:         env,
-		HTTPPort:    httpPort,
-		DatabaseURL: databaseURL,
-		JWTSecret:   jwtSecret,
-		TokenTTL:    tokenTTL,
-		ArticlesHTTPPort: articlesHTTPPort,
+		Env:                  env,
+		HTTPPort:             httpPort,
+		DatabaseURL:          databaseURL,
+		JWTSecret:            jwtSecret,
+		TokenTTL:             tokenTTL,
+		ArticlesHTTPPort:     articlesHTTPPort,
+		NotificationHTTPPort: notificationHTTPPort,
+		NotificationBaseURL:  notificationBaseURL,
 	}
 }

@@ -12,9 +12,9 @@ func main() {
 	cfg := config.MustLoad()
 
 	service := notificationservice.New()
-	server := httpserver.NewNotificationServer("8082", service)
+	server := httpserver.NewNotificationServer(cfg.NotificationHTTPPort, service)
 
-	log.Printf("notification service starting... env=%s port=%s", cfg.Env, "8082")
+	log.Printf("notification service starting... env=%s port=%s", cfg.Env, cfg.NotificationHTTPPort)
 
 	err := server.ListenAndServe()
 	if err != nil {

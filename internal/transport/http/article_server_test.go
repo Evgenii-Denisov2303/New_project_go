@@ -34,21 +34,21 @@ type stubHTTPArticleStorage struct {
 	articles []models.Article
 }
 
-func (s *stubHTTPArticleStorage) ListArticles() []models.Article {
-	return s.articles
+func (s *stubHTTPArticleStorage) ListArticles() ([]models.Article, error) {
+	return s.articles, nil
 }
 
-func (s *stubHTTPArticleStorage) GetArticleByID(id int) (models.Article, bool) {
+func (s *stubHTTPArticleStorage) GetArticleByID(id int) (models.Article, bool, error) {
 	for _, article := range s.articles {
 		if article.ID == id {
-			return article, true
+			return article, true, nil
 		}
 	}
 
-	return models.Article{}, false
+	return models.Article{}, false, nil
 }
 
-func (s *stubHTTPArticleStorage) CreateArticle(title, content string, authorID int64, authorEmail string) models.Article {
+func (s *stubHTTPArticleStorage) CreateArticle(title, content string, authorID int64, authorEmail string) (models.Article, error) {
 	article := models.Article{
 		ID:          len(s.articles) + 1,
 		Title:       title,
@@ -58,7 +58,7 @@ func (s *stubHTTPArticleStorage) CreateArticle(title, content string, authorID i
 	}
 
 	s.articles = append(s.articles, article)
-	return article
+	return article, nil
 }
 
 func TestNewArticlesServer_ListArticles(t *testing.T) {

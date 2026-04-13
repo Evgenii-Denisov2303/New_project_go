@@ -34,6 +34,10 @@ func (s *Storage) ListArticles() ([]models.Article, error) {
 		articles = append(articles, article)
 	}
 
+	if err := rows.Err(); err != nil {
+		return []models.Article{}, err
+	}
+
 	return articles, nil
 }
 
@@ -53,7 +57,7 @@ func (s *Storage) GetArticleByID(id int) (models.Article, bool, error) {
 		if err == sql.ErrNoRows {
 			return models.Article{}, false, nil
 		}
-		
+
 		return models.Article{}, false, err
 	}
 

@@ -5,11 +5,11 @@ import (
 	"net/http"
 	"strconv"
 
-	articlesservice "new_project_go/internal/services/articles"
+	articlesservice "inkflow/internal/services/articles"
 )
 
 type createArticlesRequest struct {
-	Title	string `json:"title"`
+	Title   string `json:"title"`
 	Content string `json:"content"`
 }
 
@@ -62,7 +62,7 @@ func NewArticlesServer(port string, authService Auth, articlesService *articless
 		writeJSON(w, http.StatusOK, article)
 	})
 
-	mux.HandleFunc("POST /articles",authMiddleware(authService, func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("POST /articles", authMiddleware(authService, func(w http.ResponseWriter, r *http.Request) {
 		var req createArticlesRequest
 
 		err := json.NewDecoder(r.Body).Decode(&req)
@@ -106,7 +106,7 @@ func NewArticlesServer(port string, authService Auth, articlesService *articless
 	}))
 
 	return &http.Server{
-		Addr:	":" + port,
+		Addr:    ":" + port,
 		Handler: mux,
 	}
 }

@@ -3,7 +3,7 @@ package jwt
 import (
 	"errors"
 	"fmt"
-	"new_project_go/internal/domain/models"
+	"inkflow/internal/domain/models"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"

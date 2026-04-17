@@ -3,9 +3,9 @@ package main
 import (
 	"log"
 
-	"new_project_go/internal/config"
-	notificationservice "new_project_go/internal/services/notification"
-	httpserver "new_project_go/internal/transport/http"
+	"inkflow/internal/config"
+	notificationservice "inkflow/internal/services/notification"
+	httpserver "inkflow/internal/transport/http"
 )
 
 func main() {

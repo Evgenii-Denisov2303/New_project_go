@@ -3,19 +3,19 @@ package articles
 import (
 	"sync"
 
-	"new_project_go/internal/domain/models"
+	"inkflow/internal/domain/models"
 )
 
 type InMemoryStorage struct {
-	mu        sync.RWMutex
-	articles  []models.Article
-	nextID    int
+	mu       sync.RWMutex
+	articles []models.Article
+	nextID   int
 }
 
 func NewInMemoryStorage() *InMemoryStorage {
 	return &InMemoryStorage{
 		articles: make([]models.Article, 0),
-		nextID: 1,
+		nextID:   1,
 	}
 }
 

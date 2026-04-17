@@ -8,5 +8,3 @@ func TestNew(t *testing.T) {
 		t.Fatalf("expected service to be created")
 	}
 }
-
-

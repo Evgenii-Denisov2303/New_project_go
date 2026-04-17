@@ -8,14 +8,20 @@ import (
 	"strings"
 	"testing"
 
-	"new_project_go/internal/domain/models"
-	articlesservice "new_project_go/internal/services/articles"
-	authservice "new_project_go/internal/services/auth"
+	"inkflow/internal/domain/models"
+	articlesservice "inkflow/internal/services/articles"
+	authservice "inkflow/internal/services/auth"
 )
 
 type stubAuth struct {
-	claims authservice.TokenClaims
-	err    error
+	claims     authservice.TokenClaims
+	err        error
+	profile    models.Profile
+	profileErr error
+}
+
+func (s stubAuth) Profile(ctx context.Context, userID int64) (models.Profile, error) {
+	return s.profile, s.profileErr
 }
 
 func (s stubAuth) RegisterNewUser(ctx context.Context, email string, password string) (int64, error) {

@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS profiles (
+    user_id BIGINT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    email TEXT NOT NULL UNIQUE,
+    display_name TEXT NOT NULL
+);

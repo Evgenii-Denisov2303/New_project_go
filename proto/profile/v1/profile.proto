@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package profile.v1;
+
+option go_package = "inkflow/proto/profile/v1;profilev1";
+
+service ProfileService {
+    rpc GetProfile(GetProfileRequest) returns (GetProfileResponse);
+}
+
+message GetProfileRequest {
+    int64 user_id = 1;
+}
+
+message GetProfileResponse {
+    Profile profile = 1;
+}
+
+message Profile {
+    int64 user_id = 1;
+    string email = 2;
+    string display_name = 3;
+}
+

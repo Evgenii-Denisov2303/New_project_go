@@ -7,7 +7,7 @@ import (
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 
-	"new_project_go/internal/config"
+	"inkflow/internal/config"
 )
 
 func main() {
@@ -41,6 +41,16 @@ func main() {
 	_, err = db.Exec(string(sqlBytes))
 	if err != nil {
 		log.Fatalf("apply articles migration: %v", err)
+	}
+
+	sqlBytes, err = os.ReadFile("migrations/003_create_profiles_table.sql")
+	if err != nil {
+		log.Fatalf("read profiles migration file: %v", err)
+	}
+
+	_, err = db.Exec(string(sqlBytes))
+	if err != nil {
+		log.Fatalf("apply profiles migration: %v", err)
 	}
 
 	log.Println("migration applied successfully")

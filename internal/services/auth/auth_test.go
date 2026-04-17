@@ -8,12 +8,29 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"new_project_go/internal/domain/models"
+	"inkflow/internal/domain/models"
 )
 
 type stubUserProvider struct {
 	user models.User
 	err  error
+}
+
+type stubProfileSaver struct {
+	err error
+}
+
+func (s stubProfileSaver) SaveProfile(ctx context.Context, userID int64, email string, displayName string) error {
+	return s.err
+}
+
+type stubProfileProvider struct {
+	profile models.Profile
+	err     error
+}
+
+func (s stubProfileProvider) Profile(ctx context.Context, userID int64) (models.Profile, error) {
+	return s.profile, s.err
 }
 
 func (s stubUserProvider) User(ctx context.Context, email string) (models.User, error) {
@@ -34,7 +51,7 @@ func TestAuth_Login_InvalidPassword(t *testing.T) {
 		},
 	}
 
-	authService := New(nil, provider, "secret", time.Hour)
+	authService := New(nil, provider, stubProfileSaver{}, stubProfileProvider{}, "secret", time.Hour)
 
 	_, err = authService.Login(context.Background(), "test@example.com", "wrong-password")
 	if !errors.Is(err, ErrInvalidCredentials) {
@@ -56,7 +73,7 @@ func TestAuth_Login_Success(t *testing.T) {
 		},
 	}
 
-	authService := New(nil, provider, "secret", time.Hour)
+	authService := New(nil, provider, stubProfileSaver{}, stubProfileProvider{}, "secret", time.Hour)
 
 	token, err := authService.Login(context.Background(), "test@example.com", "correct-password")
 	if err != nil {

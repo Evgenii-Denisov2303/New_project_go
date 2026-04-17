@@ -8,8 +8,8 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"new_project_go/internal/domain/models"
-	jwtlib "new_project_go/internal/lib/jwt"
+	"inkflow/internal/domain/models"
+	jwtlib "inkflow/internal/lib/jwt"
 )
 
 type UserSaver interface {
@@ -20,11 +20,21 @@ type UserProvider interface {
 	User(ctx context.Context, email string) (models.User, error)
 }
 
+type ProfileSaver interface {
+	SaveProfile(ctx context.Context, userID int64, email string, displayName string) error
+}
+
+type ProfileProvider interface {
+	Profile(ctx context.Context, userID int64) (models.Profile, error)
+}
+
 type Auth struct {
-	userSaver    UserSaver
-	userProvider UserProvider
-	jwtSecret    string
-	tokenTTL     time.Duration
+	userSaver       UserSaver
+	userProvider    UserProvider
+	profileSaver    ProfileSaver
+	ProfileProvider ProfileProvider
+	jwtSecret       string
+	tokenTTL        time.Duration
 }
 
 type TokenClaims struct {
@@ -40,24 +50,40 @@ var (
 func New(
 	userSaver UserSaver,
 	userProvider UserProvider,
+	profileSaver ProfileSaver,
+	profileProvider ProfileProvider,
 	jwtSecret string,
 	tokenTTL time.Duration,
 ) *Auth {
 	return &Auth{
-		userSaver:    userSaver,
-		userProvider: userProvider,
-		jwtSecret:    jwtSecret,
-		tokenTTL:     tokenTTL,
+		userSaver:       userSaver,
+		userProvider:    userProvider,
+		profileSaver:    profileSaver,
+		ProfileProvider: profileProvider,
+		jwtSecret:       jwtSecret,
+		tokenTTL:        tokenTTL,
 	}
 }
 
 func (a *Auth) RegisterNewUser(ctx context.Context, email string, password string) (int64, error) {
+	const op = "services.auth.RegisterNewUser"
+
 	passHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return 0, err
 	}
 
-	return a.userSaver.SaveUser(ctx, email, passHash)
+	userID, err := a.userSaver.SaveUser(ctx, email, passHash)
+	if err != nil {
+		return 0, err
+	}
+
+	err = a.profileSaver.SaveProfile(ctx, userID, email, email)
+	if err != nil {
+		return 0, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return userID, nil
 }
 
 func (a *Auth) Login(
@@ -95,4 +121,8 @@ func (a *Auth) ParseToken(token string) (TokenClaims, error) {
 		UserID: claims.UserID,
 		Email:  claims.Email,
 	}, nil
+}
+
+func (a *Auth) Profile(ctx context.Context, userID int64) (models.Profile, error) {
+	return a.ProfileProvider.Profile(ctx, userID)
 }

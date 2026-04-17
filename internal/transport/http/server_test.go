@@ -8,8 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	authservice "new_project_go/internal/services/auth"
-	storagepkg "new_project_go/internal/storage"
+	"inkflow/internal/domain/models"
+	authservice "inkflow/internal/services/auth"
+	storagepkg "inkflow/internal/storage"
 )
 
 type stubHTTPAuthService struct {
@@ -18,7 +19,13 @@ type stubHTTPAuthService struct {
 	loginToken     string
 	loginErr       error
 	claims         authservice.TokenClaims
-	parseErr          error
+	parseErr       error
+	profile        models.Profile
+	profileErr     error
+}
+
+func (s stubHTTPAuthService) Profile(ctx context.Context, userID int64) (models.Profile, error) {
+	return s.profile, s.profileErr
 }
 
 func (s stubHTTPAuthService) RegisterNewUser(ctx context.Context, email string, password string) (int64, error) {
@@ -171,7 +178,7 @@ func TestServer_Me_Success(t *testing.T) {
 
 	server := NewServer("8080", auth)
 
-	req :=httptest.NewRequest(http.MethodGet, "/me", nil)
+	req := httptest.NewRequest(http.MethodGet, "/me", nil)
 	req.Header.Set("Authorization", "Bearer valid-token")
 	rec := httptest.NewRecorder()
 	server.Handler.ServeHTTP(rec, req)
@@ -255,33 +262,33 @@ func TestNewServer_Me_InvalidToken(t *testing.T) {
 	}
 
 	if response["error"] != "invalid token" {
-		t.Fatalf("expected error %q, got %q", "invalid token", response ["error"])
+		t.Fatalf("expected error %q, got %q", "invalid token", response["error"])
 	}
 }
 
 func TestNewServer_Register_InvalidJSON(t *testing.T) {
-    server := NewServer("8080", stubHTTPAuthService{})
+	server := NewServer("8080", stubHTTPAuthService{})
 
-    body := strings.NewReader(`{"email":"test@example.com","password":`)
-    req := httptest.NewRequest(http.MethodPost, "/register", body)
-    req.Header.Set("Content-Type", "application/json")
+	body := strings.NewReader(`{"email":"test@example.com","password":`)
+	req := httptest.NewRequest(http.MethodPost, "/register", body)
+	req.Header.Set("Content-Type", "application/json")
 
-    rec := httptest.NewRecorder()
-    server.Handler.ServeHTTP(rec, req)
+	rec := httptest.NewRecorder()
+	server.Handler.ServeHTTP(rec, req)
 
-    if rec.Code != http.StatusBadRequest {
-        t.Fatalf("expected status %d, got %d", http.StatusBadRequest, rec.Code)
-    }
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, rec.Code)
+	}
 
-    var response map[string]string
-    err := json.NewDecoder(rec.Body).Decode(&response)
-    if err != nil {
-        t.Fatalf("decode response body: %v", err)
-    }
+	var response map[string]string
+	err := json.NewDecoder(rec.Body).Decode(&response)
+	if err != nil {
+		t.Fatalf("decode response body: %v", err)
+	}
 
-    if response["error"] != "invalid json" {
-        t.Fatalf("expected error %q, got %q", "invalid json", response["error"])
-    }
+	if response["error"] != "invalid json" {
+		t.Fatalf("expected error %q, got %q", "invalid json", response["error"])
+	}
 }
 
 func TestServer_Login_InvalidJSON(t *testing.T) {
@@ -306,5 +313,77 @@ func TestServer_Login_InvalidJSON(t *testing.T) {
 
 	if response["error"] != "invalid json" {
 		t.Fatalf("expected error %q, got %q", "invalid json", response["error"])
+	}
+}
+
+func TestNewServer_Profile_Success(t *testing.T) {
+	auth := stubHTTPAuthService{
+		claims: authservice.TokenClaims{
+			UserID: 7,
+			Email:  "test@example.com",
+		},
+		profile: models.Profile{
+			UserID:      7,
+			Email:       "test@example.com",
+			DisplayName: "Test User",
+		},
+	}
+
+	server := NewServer("8080", auth)
+
+	req := httptest.NewRequest(http.MethodGet, "/profile", nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+
+	rec := httptest.NewRecorder()
+	server.Handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rec.Code)
+	}
+
+	var profile models.Profile
+	err := json.NewDecoder(rec.Body).Decode(&profile)
+	if err != nil {
+		t.Fatalf("decode response body: %v", err)
+	}
+
+	if profile.UserID != 7 {
+		t.Fatalf("expected user ID %d, got %d", 7, profile.UserID)
+	}
+
+	if profile.DisplayName != "Test User" {
+		t.Fatalf("expected display name %q, got %q", "Test User", profile.DisplayName)
+	}
+}
+
+func TestNewServer_Profile_NotFound(t *testing.T) {
+	auth := stubHTTPAuthService{
+		claims: authservice.TokenClaims{
+			UserID: 7,
+			Email:  "test@example.com",
+		},
+		profileErr: storagepkg.ErrProfileNotFound,
+	}
+
+	server := NewServer("8080", auth)
+
+	req := httptest.NewRequest(http.MethodGet, "/profile", nil)
+	req.Header.Set("Authorization", "Bearer valid-tokrn")
+
+	rec := httptest.NewRecorder()
+	server.Handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected status %d, got %d", http.StatusNotFound, rec.Code)
+	}
+
+	var response map[string]string
+	err := json.NewDecoder(rec.Body).Decode(&response)
+	if err != nil {
+		t.Fatalf("decode response body: %v", err)
+	}
+
+	if response["error"] != "profile not found" {
+		t.Fatalf("expected error %q, got %q", "profile not found", response["error"])
 	}
 }

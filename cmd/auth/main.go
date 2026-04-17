@@ -3,10 +3,10 @@ package main
 import (
 	"log"
 
-	"new_project_go/internal/config"
-	authservice "new_project_go/internal/services/auth"
-	"new_project_go/internal/storage/postgres"
-	httpserver "new_project_go/internal/transport/http"
+	"inkflow/internal/config"
+	authservice "inkflow/internal/services/auth"
+	"inkflow/internal/storage/postgres"
+	httpserver "inkflow/internal/transport/http"
 )
 
 func main() {
@@ -22,11 +22,11 @@ func main() {
 		log.Fatalf("ping postgres: %v", err)
 	}
 
-	authService := authservice.New(storage, storage, cfg.JWTSecret, cfg.TokenTTL)
+	authService := authservice.New(storage, storage, storage, storage, cfg.JWTSecret, cfg.TokenTTL)
 
 	server := httpserver.NewServer(cfg.HTTPPort, authService)
 	log.Printf("auth service starting... env=%s port=%s", cfg.Env, cfg.HTTPPort)
-	
+
 	err = server.ListenAndServe()
 	if err != nil {
 		log.Fatalf("listen and serve: %v", err)

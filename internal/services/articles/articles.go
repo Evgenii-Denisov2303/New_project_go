@@ -1,8 +1,8 @@
 package articles
 
 import (
-	"new_project_go/internal/domain/models"
-	storagepkg "new_project_go/internal/storage"
+	"inkflow/internal/domain/models"
+	storagepkg "inkflow/internal/storage"
 )
 
 type Notifier interface {

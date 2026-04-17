@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"new_project_go/internal/domain/models"
-	"new_project_go/internal/storage"
+	"inkflow/internal/domain/models"
+	"inkflow/internal/storage"
 
 	"github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"

@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"new_project_go/internal/domain/models"
+	"inkflow/internal/domain/models"
 )
 
 type ArticleProvider interface {

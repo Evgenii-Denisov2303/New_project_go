@@ -3,12 +3,12 @@ package main
 import (
 	"log"
 
-	notificationclient "new_project_go/internal/clients"
-	"new_project_go/internal/config"
-	articlesservice "new_project_go/internal/services/articles"
-	authservice "new_project_go/internal/services/auth"
-	"new_project_go/internal/storage/postgres"
-	httpserver "new_project_go/internal/transport/http"
+	notificationclient "inkflow/internal/clients"
+	"inkflow/internal/config"
+	articlesservice "inkflow/internal/services/articles"
+	authservice "inkflow/internal/services/auth"
+	"inkflow/internal/storage/postgres"
+	httpserver "inkflow/internal/transport/http"
 )
 
 func main() {
@@ -24,7 +24,7 @@ func main() {
 		log.Fatalf("ping postgres: %v", err)
 	}
 
-	authService := authservice.New(nil, nil, cfg.JWTSecret, cfg.TokenTTL)
+	authService := authservice.New(nil, nil, nil, nil, cfg.JWTSecret, cfg.TokenTTL)
 	notifier := notificationclient.New(cfg.NotificationBaseURL)
 	articlesService := articlesservice.New(storage, storage, notifier)
 

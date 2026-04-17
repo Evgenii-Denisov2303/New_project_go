@@ -3,7 +3,7 @@ package articles
 import (
 	"testing"
 
-	"new_project_go/internal/domain/models"
+	"inkflow/internal/domain/models"
 )
 
 type stubArticleStorage struct {

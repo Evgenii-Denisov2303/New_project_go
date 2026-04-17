@@ -8,8 +8,9 @@ import (
 	"net/http"
 	"strings"
 
-	authservice "new_project_go/internal/services/auth"
-	storagepkg "new_project_go/internal/storage"
+	"inkflow/internal/domain/models"
+	authservice "inkflow/internal/services/auth"
+	storagepkg "inkflow/internal/storage"
 )
 
 type contextKey string
@@ -115,6 +116,8 @@ type Auth interface {
 	) (string, error)
 
 	ParseToken(token string) (authservice.TokenClaims, error)
+
+	Profile(ctx context.Context, userID int64) (models.Profile, error)
 }
 
 func NewServer(port string, authService Auth) *http.Server {
@@ -220,6 +223,33 @@ func NewServer(port string, authService Auth) *http.Server {
 			"email":   claims.Email,
 			"status":  "authenticated",
 		})
+	}))
+
+	mux.HandleFunc("GET /profile", authMiddleware(authService, func(w http.ResponseWriter, r *http.Request) {
+		claims, ok := getClaimsFromContext(r.Context())
+		if !ok {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{
+				"error": "failed to get user claims from context",
+			})
+			return
+		}
+
+		profile, err := authService.Profile(r.Context(), claims.UserID)
+		if err != nil {
+			if errors.Is(err, storagepkg.ErrProfileNotFound) {
+				writeJSON(w, http.StatusNotFound, map[string]string{
+					"error": "profile not found",
+				})
+				return
+			}
+
+			writeJSON(w, http.StatusInternalServerError, map[string]string{
+				"error": "failed to get profile",
+			})
+			return
+		}
+
+		writeJSON(w, http.StatusOK, profile)
 	}))
 
 	return &http.Server{

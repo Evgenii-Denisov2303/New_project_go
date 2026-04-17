@@ -3,7 +3,7 @@ package postgres
 import (
 	"database/sql"
 
-	"new_project_go/internal/domain/models"
+	"inkflow/internal/domain/models"
 )
 
 func (s *Storage) ListArticles() ([]models.Article, error) {
@@ -85,4 +85,3 @@ func (s *Storage) CreateArticle(title, content string, authorID int64, authorEma
 
 	return article, nil
 }
-

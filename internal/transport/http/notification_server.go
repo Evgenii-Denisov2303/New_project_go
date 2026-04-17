@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	notificationservice "new_project_go/internal/services/notification"
+	notificationservice "inkflow/internal/services/notification"
 )
 
 type notifyArticleCreatedRequest struct {
@@ -46,7 +46,7 @@ func NewNotificationServer(port string, service *notificationservice.Service) *h
 	})
 
 	return &http.Server{
-		Addr:   ":" + port,
+		Addr:    ":" + port,
 		Handler: mux,
 	}
 }

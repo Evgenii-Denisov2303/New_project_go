@@ -25,7 +25,7 @@ func main() {
 		log.Fatalf("ping postgres: %v", err)
 	}
 
-	lis, err := net.Listen("tcp", ":50051")
+	lis, err := net.Listen("tcp", ":"+cfg.ProfileGRPCPort)
 	if err != nil {
 		log.Fatalf("listen tcp: %v", err)
 	}
@@ -35,7 +35,7 @@ func main() {
 
 	profilev1.RegisterProfileServiceServer(grpcServer, profileServer)
 
-	log.Printf("profile grpc service starting... env=%s port=%s", cfg.Env, "50051")
+	log.Printf("profile grpc service starting... env=%s port=%s", cfg.Env, cfg.ProfileGRPCPort)
 
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("serve grpc: %v", err)

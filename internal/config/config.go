@@ -14,6 +14,7 @@ type Config struct {
 	ArticlesHTTPPort     string
 	NotificationHTTPPort string
 	NotificationBaseURL  string
+	ProfileGRPCPort      string
 }
 
 func MustLoad() Config {
@@ -30,6 +31,11 @@ func MustLoad() Config {
 	notificationBaseURL := os.Getenv("NOTIFICATION_BASE_URL")
 	if notificationBaseURL == "" {
 		notificationBaseURL = "http://localhost:8082"
+	}
+
+	profileGRPCPort := os.Getenv("PROFILE_GRPC_PORT")
+	if profileGRPCPort == "" {
+		profileGRPCPort = "50051"
 	}
 
 	env := os.Getenv("APP_ENV")
@@ -71,5 +77,6 @@ func MustLoad() Config {
 		ArticlesHTTPPort:     articlesHTTPPort,
 		NotificationHTTPPort: notificationHTTPPort,
 		NotificationBaseURL:  notificationBaseURL,
+		ProfileGRPCPort:      profileGRPCPort,
 	}
 }

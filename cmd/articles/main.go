@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	notificationclient "inkflow/internal/clients"
+	kafkaclient "inkflow/internal/clients/kafka"
 	"inkflow/internal/config"
 	articlesservice "inkflow/internal/services/articles"
 	authservice "inkflow/internal/services/auth"
@@ -25,7 +25,7 @@ func main() {
 	}
 
 	authService := authservice.New(nil, nil, nil, nil, cfg.JWTSecret, cfg.TokenTTL)
-	notifier := notificationclient.New(cfg.NotificationBaseURL)
+	notifier := kafkaclient.NewProducer(cfg.KafkaBrokers)
 	articlesService := articlesservice.New(storage, storage, notifier)
 
 	server := httpserver.NewArticlesServer(cfg.ArticlesHTTPPort, authService, articlesService)

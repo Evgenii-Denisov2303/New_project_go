@@ -15,6 +15,7 @@ type Config struct {
 	NotificationHTTPPort string
 	NotificationBaseURL  string
 	ProfileGRPCPort      string
+	KafkaBrokers         string
 }
 
 func MustLoad() Config {
@@ -36,6 +37,11 @@ func MustLoad() Config {
 	profileGRPCPort := os.Getenv("PROFILE_GRPC_PORT")
 	if profileGRPCPort == "" {
 		profileGRPCPort = "50051"
+	}
+
+	kafkaBrokers := os.Getenv("KAFKA_BROKERS")
+	if kafkaBrokers == "" {
+		kafkaBrokers = "localhost:9092"
 	}
 
 	env := os.Getenv("APP_ENV")
@@ -78,5 +84,6 @@ func MustLoad() Config {
 		NotificationHTTPPort: notificationHTTPPort,
 		NotificationBaseURL:  notificationBaseURL,
 		ProfileGRPCPort:      profileGRPCPort,
+		KafkaBrokers:         kafkaBrokers,
 	}
 }

@@ -51,11 +51,15 @@ func (p *Producer) NotifyArticleCreated(title string, authorEmail string) {
 
 	err = p.writer.WriteMessages(context.Background(),
 		kafkago.Message{
-			Key:  []byte(authorEmail),
+			Key:   []byte(authorEmail),
 			Value: data,
 		},
 	)
 	if err != nil {
-		log.Printf("kafka producer stub: brokers=%s title=%s author=%s", p.brokers, title, authorEmail)
+		log.Printf("kafka producer write error: %v", err)
 	}
+}
+
+func (p *Producer) Close() error {
+	return p.writer.Close()
 }

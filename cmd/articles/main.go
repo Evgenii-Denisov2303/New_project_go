@@ -25,8 +25,10 @@ func main() {
 	}
 
 	authService := authservice.New(nil, nil, nil, nil, cfg.JWTSecret, cfg.TokenTTL)
-	notifier := kafkaclient.NewProducer(cfg.KafkaBrokers)
-	articlesService := articlesservice.New(storage, storage, notifier)
+	producer := kafkaclient.NewProducer(cfg.KafkaBrokers)
+	defer producer.Close()
+
+	articlesService := articlesservice.New(storage, storage, producer)
 
 	server := httpserver.NewArticlesServer(cfg.ArticlesHTTPPort, authService, articlesService)
 

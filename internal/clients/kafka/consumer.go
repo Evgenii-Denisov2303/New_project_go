@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"strings"
 
 	kafkago "github.com/segmentio/kafka-go"
 )
@@ -19,8 +20,10 @@ type ArticleCreatedEvent struct {
 }
 
 func NewConsumer(brokers string) *Consumer {
+	brokerList := strings.Split(brokers, ",")
+
 	reader := kafkago.NewReader(kafkago.ReaderConfig{
-		Brokers: []string{brokers},
+		Brokers: brokerList,
 		Topic:   articleCreatedTopic,
 		GroupID: "notification-service",
 	})
@@ -31,7 +34,7 @@ func NewConsumer(brokers string) *Consumer {
 	}
 }
 
-func (c *Consumer) ConsumerArticleCreated(handler func(ArticleCreatedEvent)) error {
+func (c *Consumer) ConsumeArticleCreated(handler func(ArticleCreatedEvent)) error {
 	for {
 		msg, err := c.reader.ReadMessage(context.Background())
 		if err != nil {
@@ -46,4 +49,8 @@ func (c *Consumer) ConsumerArticleCreated(handler func(ArticleCreatedEvent)) err
 
 		handler(event)
 	}
+}
+
+func (c *Consumer) Close() error {
+	return c.reader.Close()
 }

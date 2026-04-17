@@ -3,10 +3,10 @@ package main
 import (
 	"log"
 
+	kafkaclient "inkflow/internal/clients/kafka"
 	"inkflow/internal/config"
 	notificationservice "inkflow/internal/services/notification"
 	httpserver "inkflow/internal/transport/http"
-	kafkaclient "inkflow/internal/clients/kafka"
 )
 
 func main() {
@@ -16,9 +16,10 @@ func main() {
 
 	server := httpserver.NewNotificationServer(cfg.NotificationHTTPPort, service)
 	consumer := kafkaclient.NewConsumer(cfg.KafkaBrokers)
+	defer consumer.Close()
 
 	go func() {
-		err := consumer.ConsumerArticleCreated(func(event kafkaclient.ArticleCreatedEvent) {
+		err := consumer.ConsumeArticleCreated(func(event kafkaclient.ArticleCreatedEvent) {
 			service.NotifyArticleCreated(event.Title, event.AuthorEmail)
 		})
 		if err != nil {
